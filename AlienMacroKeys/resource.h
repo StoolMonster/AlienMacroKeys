@@ -13,6 +13,8 @@
 #define IDC_ALIENMACROKEYS              109
 #define IDR_MAINFRAME                   128
 #define IDD_MAINWINDOW                  129
+#define ID_TRAY_EXIT					40001
+#define ID_TRAY_ICON					40002
 #define IDC_STATIC                      -1
 
 // Next default values for new objects

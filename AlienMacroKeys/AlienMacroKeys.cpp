@@ -11,6 +11,8 @@ HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
 HWND hMainDialog = nullptr;
+NOTIFYICONDATA nid = { 0 };
+HMENU hTrayMenu = nullptr;
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -18,7 +20,9 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    MainDlgProc(HWND, UINT, WPARAM, LPARAM);
-void ResizeMainWindowToDialog(HWND, HWND);
+void                ResizeMainWindowToDialog(HWND, HWND);
+void                AddTrayIcon(HWND);
+void                RemoveTrayIcon();
 
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
@@ -144,12 +148,30 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             // Position and show the dialog as needed
 			SetWindowPos(hMainDialog, nullptr, 10, 10, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
         }
-
         ResizeMainWindowToDialog(hWnd, hMainDialog);
+        
+        AddTrayIcon(hWnd);
+
+        break;
+    case WM_USER + 1: // Tray icon callback
+        if (lParam == WM_RBUTTONUP) {
+            POINT pt;
+            GetCursorPos(&pt);
+            if (!hTrayMenu) {
+                hTrayMenu = CreatePopupMenu();
+                AppendMenu(hTrayMenu, MF_STRING, ID_TRAY_EXIT, L"Exit");
+            }
+            SetForegroundWindow(hWnd); // Required for menu to disappear correctly
+            TrackPopupMenu(hTrayMenu, TPM_RIGHTBUTTON, pt.x, pt.y, 0, hWnd, NULL);
+        }
         break;
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
+            if (wmId == ID_TRAY_EXIT) {
+                DestroyWindow(hWnd);
+                break;
+			}
             // Forward commands to the child dialog if needed
             if (hMainDialog && IsDialogMessage(hMainDialog, &(*(MSG*)&message)))
             {
@@ -178,6 +200,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_DESTROY:
+        RemoveTrayIcon();
+        if (hTrayMenu) {
+            DestroyMenu(hTrayMenu);
+            hTrayMenu = nullptr;
+        }
         if (hMainDialog)
         {
             DestroyWindow(hMainDialog); // Destroy the dialog when the main window is destroyed
@@ -252,4 +279,19 @@ void ResizeMainWindowToDialog(HWND hWnd, HWND hDialog)
     SetWindowPos(hMainDialog, nullptr, 0, 0,
         dlgWidthPx, dlgHeightPx,
         SWP_NOZORDER | SWP_SHOWWINDOW);
+}
+
+void AddTrayIcon(HWND hWnd) {
+    nid.cbSize = sizeof(NOTIFYICONDATA);
+    nid.hWnd = hWnd;
+    nid.uID = ID_TRAY_ICON;
+    nid.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
+    nid.uCallbackMessage = WM_USER + 1;
+    nid.hIcon = LoadIcon(hInst, MAKEINTRESOURCE(IDI_ALIENMACROKEYS));
+    wcscpy_s(nid.szTip, L"AlienMacroKeys");
+    Shell_NotifyIcon(NIM_ADD, &nid);
+}
+
+void RemoveTrayIcon() {
+    Shell_NotifyIcon(NIM_DELETE, &nid);
 }
