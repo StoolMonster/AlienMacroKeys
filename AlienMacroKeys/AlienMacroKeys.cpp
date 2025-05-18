@@ -1,6 +1,8 @@
 // AlienMacroKeys.cpp : Defines the entry point for the application.
 //
 
+#include <regex>
+#include <thread>
 #include "framework.h"
 #include "AlienMacroKeys.h"
 
@@ -45,6 +47,26 @@ int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
     {
         return FALSE;
     }
+
+	// Start the monitor thread
+    std::string vid = AW_KB_VID;
+    std::string pid = AW_KB_PID;
+
+    std::regex re("(?:0x)[0-9a-fA-F]{4}");
+
+	bool vid_valid = std::regex_match(vid, re);
+	bool pid_valid = std::regex_match(pid, re);
+    if (!vid_valid || !pid_valid)
+    {
+        std::cerr << "VID/PID is invalid. Please make sure it is in the format 0xXXXX where XXXX is the hexadecimal VID/PID." << std::endl;
+    }
+
+    WORD targetVID = (WORD)std::stoi(vid, nullptr, 16);
+    WORD targetPID = (WORD)std::stoi(pid, nullptr, 16);
+
+    std::thread([=] {
+        StartMonitor(targetVID, targetPID);
+        }).detach();
 
     HACCEL hAccelTable = LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_ALIENMACROKEYS));
 

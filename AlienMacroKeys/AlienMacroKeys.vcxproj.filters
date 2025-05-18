@@ -27,9 +27,21 @@
     <ClInclude Include="AlienMacroKeys.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="hid.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="AlienMacroKeys.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="AlienMacroKeysMonitor.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="pnp.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="report.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
