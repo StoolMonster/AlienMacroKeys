@@ -134,6 +134,20 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    // existing cases
+    case WM_SYSCOMMAND:
+        if ((wParam & 0xFFF0) == SC_MINIMIZE) {
+            ShowWindow(hWnd, SW_HIDE); // Hide window and taskbar icon
+            return 0; // Prevent default minimize
+        }
+        // For all other system commands, call the default handler
+        return DefWindowProc(hWnd, message, wParam, lParam);
+    case WM_SIZE:
+        if (wParam == SIZE_MINIMIZED) {
+			ShowWindow(hWnd, SW_HIDE); // Hide window and taskbar icon
+            return 0;
+        }
+        break;
     case WM_CREATE:
         // Create the modeless dialog as a child of the main window
         hMainDialog = CreateDialogParam(
@@ -163,6 +177,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             }
             SetForegroundWindow(hWnd); // Required for menu to disappear correctly
             TrackPopupMenu(hTrayMenu, TPM_RIGHTBUTTON, pt.x, pt.y, 0, hWnd, NULL);
+        }
+        else if (lParam == WM_LBUTTONUP) {
+			// Restore the window if it was hidden
+            ShowWindow(hWnd, SW_SHOW);
+			SetForegroundWindow(hWnd); // Bring the window to the front
         }
         break;
     case WM_COMMAND:
