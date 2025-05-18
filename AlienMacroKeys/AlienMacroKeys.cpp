@@ -10,6 +10,7 @@
 HINSTANCE hInst;                                // current instance
 WCHAR szTitle[MAX_LOADSTRING];                  // The title bar text
 WCHAR szWindowClass[MAX_LOADSTRING];            // the main window class name
+HWND hMainDialog = nullptr;
 
 // Forward declarations of functions included in this code module:
 ATOM                MyRegisterClass(HINSTANCE hInstance);
@@ -17,6 +18,8 @@ BOOL                InitInstance(HINSTANCE, int);
 LRESULT CALLBACK    WndProc(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    About(HWND, UINT, WPARAM, LPARAM);
 INT_PTR CALLBACK    MainDlgProc(HWND, UINT, WPARAM, LPARAM);
+void ResizeMainWindowToDialog(HWND, HWND);
+
 
 int APIENTRY wWinMain(_In_ HINSTANCE hInstance,
                      _In_opt_ HINSTANCE hPrevInstance,
@@ -126,9 +129,31 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
     {
+    case WM_CREATE:
+        // Create the modeless dialog as a child of the main window
+        hMainDialog = CreateDialogParam(
+            hInst,
+            MAKEINTATOM(IDD_MAINWINDOW),
+            hWnd,       // parent is main window
+            MainDlgProc,
+            0
+        );
+        if (hMainDialog)
+        {
+            // Position and show the dialog as needed
+			SetWindowPos(hMainDialog, nullptr, 10, 10, 0, 0, SWP_NOSIZE | SWP_NOZORDER | SWP_SHOWWINDOW);
+        }
+
+        ResizeMainWindowToDialog(hWnd, hMainDialog);
+        break;
     case WM_COMMAND:
         {
             int wmId = LOWORD(wParam);
+            // Forward commands to the child dialog if needed
+            if (hMainDialog && IsDialogMessage(hMainDialog, &(*(MSG*)&message)))
+            {
+                break;
+			}
             // Parse the menu selections:
             switch (wmId)
             {
@@ -152,6 +177,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         }
         break;
     case WM_DESTROY:
+        if (hMainDialog)
+        {
+            DestroyWindow(hMainDialog); // Destroy the dialog when the main window is destroyed
+			hMainDialog = nullptr; // Reset the dialog handle
+        }
         PostQuitMessage(0);
         break;
     default:
@@ -178,4 +208,47 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     }
     return (INT_PTR)FALSE;
+}
+
+INT_PTR CALLBACK MainDlgProc(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
+{
+    switch (message)
+    {
+    case WM_INITDIALOG:
+        return (INT_PTR)TRUE;
+    case WM_COMMAND:
+        // Handle dialog controls here
+        break;
+    }
+    return (INT_PTR)FALSE;
+}
+
+// Helper function to resize the main window's client area to match the dialog resource size
+void ResizeMainWindowToDialog(HWND hWnd, HWND hDialog)
+{
+    if (!hWnd || !hDialog) return;
+
+    // Get the dialog's size in screen coordinates
+    RECT dlgRect;
+    GetWindowRect(hDialog, &dlgRect);
+    int dlgWidthPx = dlgRect.right - dlgRect.left;
+    int dlgHeightPx = dlgRect.bottom - dlgRect.top;
+
+    // Adjust for window borders so the client area matches the dialog size
+    RECT reClient, reWindow;
+    GetClientRect(hWnd, &reClient);
+    GetWindowRect(hWnd, &reWindow);
+
+    int borderWidth = (reWindow.right - reWindow.left) - (reClient.right - reClient.left);
+    int borderHeight = (reWindow.bottom - reWindow.top) - (reClient.bottom - reClient.top);
+
+    SetWindowPos(hWnd, nullptr, 0, 0,
+        dlgWidthPx + borderWidth,
+        dlgHeightPx + borderHeight,
+        SWP_NOMOVE | SWP_NOZORDER);
+
+    // Position the dialog at (0,0) in the client area
+    SetWindowPos(hMainDialog, nullptr, 0, 0,
+        dlgWidthPx, dlgHeightPx,
+        SWP_NOZORDER | SWP_SHOWWINDOW);
 }
