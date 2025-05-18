@@ -1,6 +1,6 @@
 # AlienMacroKeys
 
-I found this repo[https://github.com/mscreations/Alien-Macros], which is no longer updated for more than a year and only valid for `Alienware m17 R4`.
+I found this [repo](https://github.com/mscreations/Alien-Macros), which is no longer updated for more than a year and only valid for `Alienware m17 R4`.
 
 ## About this repo
 
