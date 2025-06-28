@@ -5,7 +5,7 @@ I found this [repo](https://github.com/mscreations/Alien-Macros), which is no lo
 ## About this repo
 
 1. Still in early development.
-2. Currently only valid for my Dell G16 7630.
+2. Currently only tested for my Dell G16 7630.
 3. Map the macro keys (A-E) to F13-F17.
 4. No AWCC needed.
 5. Use this along side the AHK to map the keys (F13-F17) to your desired function.
